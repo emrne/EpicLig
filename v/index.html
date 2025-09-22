@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Epic Lig</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #111;
+      padding: 15px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    nav {
+      text-align: center;
+      margin: 15px;
+    }
+    nav button {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #444;
+      color: white;
+    }
+    nav button:hover {
+      background: #666;
+    }
+    table {
+      width: 90%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: rgba(0,0,0,0.6);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #555;
+    }
+    th {
+      background: #222;
+    }
+    .form-section {
+      display: none;
+      width: 90%;
+      margin: 20px auto;
+      background: rgba(0,0,0,0.6);
+      padding: 15px;
+      border-radius: 8px;
+    }
+    input, select {
+      padding: 5px;
+      border-radius: 4px;
+      border: none;
+      margin: 5px;
+      color: black;
+      background: #f1f1f1;
+    }
+    input:focus, select:focus {
+      outline: 2px solid #00aaff;
+      background: #fff;
+    }
+    .hidden { display: none; }
+    h2 { text-align: center; }
+  </style>
+</head>
+<body>
+
+<header>⚽ Epic Lig ⚽</header>
+
+<nav>
+  <button onclick="showSection('league')">Lig Tablosu</button>
+  <button onclick="showSection('scorers')">Gol Krallığı</button>
+  <button onclick="showSection('assists')">Asist Krallığı</button>
+  <button onclick="showSection('newsSection')">Haberler</button>
+  <button onclick="adminLogin()">Admin Paneli</button>
+</nav>
+
+<!-- Lig Tablosu -->
+<section id="league">
+  <h2>Lig Tablosu</h2>
+  <table id="leagueTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Takım</th>
+        <th>O</th>
+        <th>G</th>
+        <th>B</th>
+        <th>M</th>
+        <th>AG</th>
+        <th>YG</th>
+        <th>AV</th>
+        <th>P</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<!-- Gol Krallığı -->
+<section id="scorers" class="hidden">
+  <h2>Gol Krallığı</h2>
+  <ul id="scorerList"></ul>
+</section>
+
+<!-- Asist Krallığı -->
+<section id="assists" class="hidden">
+  <h2>Asist Krallığı</h2>
+  <ul id="assistList"></ul>
+</section>
+
+<!-- Haberler -->
+<section id="newsSection" class="hidden">
+  <h2>Haberler</h2>
+  <ul id="newsListDisplay"></ul>
+</section>
+
+<!-- Admin Panel -->
+<section id="adminPanel" class="form-section">
+  <h2>Admin Paneli</h2>
+
+  <h3>Puan Güncelle</h3>
+  <form onsubmit="updateTeam(event)">
+    <select id="teamSelect"></select><br>
+    Oynanan: <input type="number" id="O" min="0"><br>
+    Galibiyet: <input type="number" id="G" min="0"><br>
+    Beraberlik: <input type="number" id="B" min="0"><br>
+    Mağlubiyet: <input type="number" id="M" min="0"><br>
+    Attığı Gol: <input type="number" id="AG" min="0"><br>
+    Yediği Gol: <input type="number" id="YG" min="0"><br>
+    <button type="submit">Kaydet</button>
+  </form>
+
+  <h3>Golcü Ekle</h3>
+  <form onsubmit="addScorer(event)">
+    İsim: <input type="text" id="scorerName"><br>
+    Goller: <input type="number" id="scorerGoals" min="0"><br>
+    <button type="submit">Ekle</button>
+  </form>
+
+  <h3>Asistçi Ekle</h3>
+  <form onsubmit="addAssist(event)">
+    İsim: <input type="text" id="assistName"><br>
+    Asist: <input type="number" id="assistCount" min="0"><br>
+    <button type="submit">Ekle</button>
+  </form>
+
+  <h3>Haber Ekle</h3>
+  <form onsubmit="addNews(event)">
+    <input type="text" id="newsInput" placeholder="Haber gir..."><br>
+    <button type="submit">Ekle</button>
+  </form>
+  <ul id="newsList"></ul>
+</section>
+
+<script>
+const password = "BhKFŞfmFKfl";
+
+let teams = JSON.parse(localStorage.getItem("teams")) || [
+  { name: "Barcelona", O:0,G:0,B:0,M:0,AG:0,YG:0 },
+  { name: "Juventus", O:0,G:0,B:0,M:0,AG:0,YG:0 },
+  { name: "Arsenal", O:0,G:0,B:0,M:0,AG:0,YG:0 },
+  { name: "Everton", O:0,G:0,B:0,M:0,AG:0,YG:0 },
+  { name: "Liverpool", O:0,G:0,B:0,M:0,AG:0,YG:0 },
+  { name: "Manchester City", O:0,G:0,B:0,M:0,AG:0,YG:0 },
+  { name: "Dortmund", O:0,G:0,B:0,M:0,AG:0,YG:0 },
+  { name: "Real Madrid", O:0,G:0,B:0,M:0,AG:0,YG:0 }
+];
+
+let scorers = JSON.parse(localStorage.getItem("scorers")) || [];
+let assists = JSON.parse(localStorage.getItem("assists")) || [];
+let news = JSON.parse(localStorage.getItem("news")) || [];
+
+function saveData() {
+  localStorage.setItem("teams", JSON.stringify(teams));
+  localStorage.setItem("scorers", JSON.stringify(scorers));
+  localStorage.setItem("assists", JSON.stringify(assists));
+  localStorage.setItem("news", JSON.stringify(news));
+}
+
+function renderTable(){
+  teams.forEach(t=>{
+    t.AV = t.AG - t.YG;
+    t.P = t.G*3 + t.B;
+  });
+  teams.sort((a,b)=>b.P-a.P || b.AV-a.AV || b.AG-a.AG);
+  
+  const tbody = document.querySelector("#leagueTable tbody");
+  tbody.innerHTML="";
+  teams.forEach((t,i)=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${t.name}</td>
+        <td>${t.O}</td>
+        <td>${t.G}</td>
+        <td>${t.B}</td>
+        <td>${t.M}</td>
+        <td>${t.AG}</td>
+        <td>${t.YG}</td>
+        <td>${t.AV}</td>
+        <td>${t.P}</td>
+      </tr>`;
+  });
+
+  document.getElementById("teamSelect").innerHTML =
+    teams.map(t=>`<option>${t.name}</option>`).join("");
+
+  document.getElementById("scorerList").innerHTML =
+    scorers.map(s=>`<li>${s.name} - ${s.goals} gol</li>`).join("");
+  document.getElementById("assistList").innerHTML =
+    assists.map(a=>`<li>${a.name} - ${a.count} asist</li>`).join("");
+
+  document.getElementById("newsList").innerHTML =
+    news.map(n=>`<li>${n}</li>`).join("");
+  document.getElementById("newsListDisplay").innerHTML =
+    news.map(n=>`<li>${n}</li>`).join("");
+}
+
+function showSection(id){
+  document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+
+function adminLogin(){
+  let pass = prompt("Şifreyi gir:");
+  if(pass===password){
+    document.getElementById("adminPanel").style.display="block";
+    showSection('adminPanel');
+  } else {
+    alert("Hatalı şifre!");
+  }
+}
+
+function updateTeam(e){
+  e.preventDefault();
+  const name=document.getElementById("teamSelect").value;
+  let t=teams.find(x=>x.name===name);
+  t.O=+document.getElementById("O").value;
+  t.G=+document.getElementById("G").value;
+  t.B=+document.getElementById("B").value;
+  t.M=+document.getElementById("M").value;
+  t.AG=+document.getElementById("AG").value;
+  t.YG=+document.getElementById("YG").value;
+  saveData();
+  renderTable();
+}
+
+function addScorer(e){
+  e.preventDefault();
+  scorers.push({name:document.getElementById("scorerName").value,
+                goals:+document.getElementById("scorerGoals").value});
+  scorers.sort((a,b)=>b.goals-a.goals);
+  saveData();
+  renderTable();
+}
+
+function addAssist(e){
+  e.preventDefault();
+  assists.push({name:document.getElementById("assistName").value,
+                count:+document.getElementById("assistCount").value});
+  assists.sort((a,b)=>b.count-a.count);
+  saveData();
+  renderTable();
+}
+
+function addNews(e){
+  e.preventDefault();
+  news.push(document.getElementById("newsInput").value);
+  saveData();
+  renderTable();
+}
+
+renderTable();
+</script>
+
+</body>
+</html>
+
+     
